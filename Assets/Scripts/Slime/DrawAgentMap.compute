@@ -10,7 +10,7 @@ struct Agent {
 RWStructuredBuffer<Agent> agents;
 uint numAgents;
 
-RWTexture2D<float4> TargetTexture;
+RWTexture3D<float4> TargetTexture;
 
 [numthreads(16,1,1)]
 void DrawAgentMap (uint3 id : SV_DispatchThreadID)
@@ -24,5 +24,5 @@ void DrawAgentMap (uint3 id : SV_DispatchThreadID)
 	// Draw to trail map
 	int cellX = (int)agent.position.x;
 	int cellY = (int)agent.position.y;
-	TargetTexture[int2(cellX, cellY)] = 1;
+	TargetTexture[int3(cellX,cellY,0)] = 1;
 }

@@ -1,7 +1,7 @@
 ﻿#pragma kernel CalculateMinMax
 
 static const int intScalar = 100000;
-RWTexture2D<float4> Source;
+RWTexture3D<float4> Source;
 uint width;
 uint height;
 
@@ -15,7 +15,7 @@ void CalculateMinMax (uint3 id : SV_DispatchThreadID)
 		return;
 	}
 
-	float value = Source[id.xy].x;
+	float value = Source[int3(id.x,id.y,0)].x;
 	int valueInt = (int)(value * intScalar);
 
 	InterlockedMin(minMaxBuffer[0], valueInt);
@@ -34,8 +34,8 @@ void NormalizeTexture (uint3 id : SV_DispatchThreadID)
 	float minValue = (float)minMaxBuffer[0] / intScalar;
 	float maxValue = (float)minMaxBuffer[1] / intScalar;
 
-	float value = Source[id.xy].x;
+	float value = Source[int3(id.x,id.y,0)].x;
 	float normalizedValue = (value - minValue) / (maxValue - minValue);
 
-	Source[id.xy] = normalizedValue;
+	Source[int3(id.x,id.y,0)] = normalizedValue;
 }

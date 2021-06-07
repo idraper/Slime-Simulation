@@ -28,10 +28,65 @@ public class Simulation : MonoBehaviour
 	ComputeBuffer settingsBuffer;
 	Texture2D colourMapTexture;
 
+	private Texture3D outTex;
+
+	static Texture3D CreateTexture3D()
+	{
+		// Configure the texture
+		int size = 32;
+		TextureFormat format = TextureFormat.RGBA32;
+		TextureWrapMode wrapMode =  TextureWrapMode.Clamp;
+
+		// Create the texture and apply the configuration
+		Texture3D texture = new Texture3D(size, size, size, format, false);
+		texture.wrapMode = wrapMode;
+
+		// Create a 3-dimensional array to store color data
+		Color[] colors = new Color[size * size * size];
+
+		// Populate the array so that the x, y, and z values of the texture will map to red, blue, and green colors
+		float inverseResolution = 1.0f / (size - 1.0f);
+		for (int z = 0; z < size; z++)
+		{
+			int zOffset = z * size * size;
+			for (int y = 0; y < size; y++)
+			{
+				int yOffset = y * size;
+				for (int x = 0; x < size; x++)
+				{
+					colors[x + yOffset + zOffset] = new Color(x * inverseResolution,
+						y * inverseResolution, z * inverseResolution, 1.0f);
+				}
+			}
+		}
+
+		// Copy the color values to the texture
+		texture.SetPixels(colors);
+
+		// Apply the changes to the texture and upload the updated texture to the GPU
+		texture.Apply();        
+
+		// Save the texture to your Unity Project
+		// AssetDatabase.CreateAsset(texture, "Assets/Example3DTexture.asset");
+		return texture;
+	}
+
+	// Texture2D toTexture2D(RenderTexture rTex)
+	// {
+	// 	Texture2D tex = new Texture2D(rTex.width, rTex.height, rTex.format, false);
+	// 	// ReadPixels looks at the active RenderTexture.
+	// 	RenderTexture.active = rTex;
+	// 	tex.ReadPixels(new Rect(0, 0, rTex.width, rTex.height), 0, 0);
+	// 	tex.Apply();
+	// 	return tex;
+	// }
+
 	protected virtual void Start()
 	{
 		Init();
-		transform.GetComponentInChildren<MeshRenderer>().material.mainTexture = displayTexture;
+		ComputeHelper.voxelSize = displayTexture.volumeDepth;
+		outTex = new Texture3D(displayTexture.width, displayTexture.height, displayTexture.volumeDepth, TextureFormat.RGBA32, true);
+		transform.GetComponentInChildren<MeshRenderer>().material.mainTexture = outTex;
 	}
 
 
@@ -39,9 +94,9 @@ public class Simulation : MonoBehaviour
 	{
 
 		// Create render textures
-		ComputeHelper.CreateRenderTexture(ref trailMap, settings.width, settings.height, filterMode, format);
-		ComputeHelper.CreateRenderTexture(ref diffusedTrailMap, settings.width, settings.height, filterMode, format);
-		ComputeHelper.CreateRenderTexture(ref displayTexture, settings.width, settings.height, filterMode, format);
+		ComputeHelper.CreateRenderTexture(ref trailMap, settings.width, settings.height, settings.depth, filterMode, format);
+		ComputeHelper.CreateRenderTexture(ref diffusedTrailMap, settings.width, settings.height, settings.depth, filterMode, format);
+		ComputeHelper.CreateRenderTexture(ref displayTexture, settings.width, settings.height, settings.depth, filterMode, format);
 
 		// Create agents with initial positions and angles
 		Agent[] agents = new Agent[settings.numAgents];
@@ -110,6 +165,8 @@ public class Simulation : MonoBehaviour
 		for (int i = 0; i < settings.stepsPerFrame; i++)
 		{
 			RunSimulation();
+			ComputeHelper.PutRenderTextureIn3D(ref outTex, ref displayTexture);
+			outTex.Apply();
 		}
 	}
 

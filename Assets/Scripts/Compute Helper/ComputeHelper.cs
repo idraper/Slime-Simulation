@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Reflection;
 	using UnityEngine;
+	using UnityEngine.Rendering;
 	using UnityEngine.Experimental.Rendering;
 
 	public static class ComputeHelper
@@ -15,6 +16,7 @@
 		static ComputeShader normalizeTextureCompute;
 		static ComputeShader clearTextureCompute;
 		static ComputeShader swizzleTextureCompute;
+		static ComputeShader slicer;
 
 
 
@@ -103,13 +105,13 @@
 
 		// ------ Texture Helpers ------
 
-		public static void CreateRenderTexture(ref RenderTexture texture, int width, int height)
+		public static void CreateRenderTexture(ref RenderTexture texture, int width, int height, int depth)
 		{
-			CreateRenderTexture(ref texture, width, height, defaultFilterMode, defaultGraphicsFormat);
+			CreateRenderTexture(ref texture, width, height, depth, defaultFilterMode, defaultGraphicsFormat);
 		}
 
 
-		public static void CreateRenderTexture(ref RenderTexture texture, int width, int height, FilterMode filterMode, GraphicsFormat format)
+		public static void CreateRenderTexture(ref RenderTexture texture, int width, int height, int depth, FilterMode filterMode, GraphicsFormat format)
 		{
 			if (texture == null || !texture.IsCreated() || texture.width != width || texture.height != height || texture.graphicsFormat != format)
 			{
@@ -118,6 +120,10 @@
 					texture.Release();
 				}
 				texture = new RenderTexture(width, height, 0);
+				texture.dimension = TextureDimension.Tex3D;
+				texture.volumeDepth = depth;
+				texture.isPowerOfTwo = true;
+
 				texture.graphicsFormat = format;
 				texture.enableRandomWrite = true;
 
@@ -313,6 +319,69 @@
 #endif
 			bool canRun = !isCompilingOrExitingEditMode;
 			return canRun;
+		}
+
+		// 3d texture conversion helper
+
+		public static int voxelSize = 64;
+		public static RenderTexture Copy3DSliceToRenderTexture(ref RenderTexture source, int layer)
+		{
+			RenderTexture render = new RenderTexture(source.width, source.height, 0, RenderTextureFormat.ARGB32);
+			render.dimension = UnityEngine.Rendering.TextureDimension.Tex2D;
+			render.enableRandomWrite = true;
+			render.wrapMode = TextureWrapMode.Clamp;
+			render.Create();
+
+			if (slicer == null)
+			{
+				slicer = (ComputeShader)Resources.Load("Slicer");
+			}
+
+			int kernelIndex = slicer.FindKernel("Slicer");
+			slicer.SetTexture(kernelIndex, "voxels", source);
+			slicer.SetInt("layer", layer);
+			slicer.SetTexture(kernelIndex, "Result", render);
+			slicer.Dispatch(kernelIndex, voxelSize, voxelSize, 1);
+
+			return render;
+		}
+
+		public static Texture2D ConvertFromRenderTexture(ref RenderTexture rt)
+		{
+				Texture2D output = new Texture2D(voxelSize, voxelSize);
+				RenderTexture.active = rt;
+				output.ReadPixels(new Rect(0, 0, voxelSize, voxelSize), 0, 0);
+				output.Apply();
+				return output;
+		}
+
+		public static void PutRenderTextureIn3D(ref Texture3D output, ref RenderTexture selectedRenderTexture)
+		{
+			RenderTexture[] layers = new RenderTexture[selectedRenderTexture.volumeDepth];
+			for(int i = 0; i < voxelSize; i++)        
+				layers[i] = Copy3DSliceToRenderTexture(ref selectedRenderTexture, i);
+
+			Texture2D[] finalSlices = new Texture2D[voxelSize];
+			for (int i = 0; i < voxelSize; i++)        
+				finalSlices[i] = ConvertFromRenderTexture(ref layers[i]);
+
+			Color[] outputPixels = output.GetPixels();
+
+			for (int k = 0; k < voxelSize; k++)
+			{
+				Color[] layerPixels = finalSlices[k].GetPixels();
+				for (int i = 0; i < voxelSize; i++)
+					for (int j = 0; j < voxelSize; j++)
+					{
+						outputPixels[i + j * voxelSize + k * voxelSize * voxelSize] =
+							layerPixels[i + j * voxelSize];
+					}
+			}
+
+			output.SetPixels(outputPixels);
+			// output.Apply();
+
+			// AssetDatabase.CreateAsset(output, "Assets/" + nameOfTheAsset + ".asset");
 		}
 	}
 }
