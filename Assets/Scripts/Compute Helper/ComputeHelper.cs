@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Reflection;
 	using UnityEngine;
+	using UnityEngine.Rendering;
 	using UnityEngine.Experimental.Rendering;
 
 	public static class ComputeHelper
@@ -15,6 +16,7 @@
 		static ComputeShader normalizeTextureCompute;
 		static ComputeShader clearTextureCompute;
 		static ComputeShader swizzleTextureCompute;
+		static ComputeShader slicer;
 
 
 
@@ -103,13 +105,13 @@
 
 		// ------ Texture Helpers ------
 
-		public static void CreateRenderTexture(ref RenderTexture texture, int width, int height)
+		public static void CreateRenderTexture(ref RenderTexture texture, int width, int height, int depth)
 		{
-			CreateRenderTexture(ref texture, width, height, defaultFilterMode, defaultGraphicsFormat);
+			CreateRenderTexture(ref texture, width, height, depth, defaultFilterMode, defaultGraphicsFormat);
 		}
 
 
-		public static void CreateRenderTexture(ref RenderTexture texture, int width, int height, FilterMode filterMode, GraphicsFormat format)
+		public static void CreateRenderTexture(ref RenderTexture texture, int width, int height, int depth, FilterMode filterMode, GraphicsFormat format)
 		{
 			if (texture == null || !texture.IsCreated() || texture.width != width || texture.height != height || texture.graphicsFormat != format)
 			{
@@ -118,6 +120,10 @@
 					texture.Release();
 				}
 				texture = new RenderTexture(width, height, 0);
+				texture.dimension = TextureDimension.Tex3D;
+				texture.volumeDepth = depth;
+				// texture.isPowerOfTwo = true;
+
 				texture.graphicsFormat = format;
 				texture.enableRandomWrite = true;
 
@@ -131,7 +137,7 @@
 		/// Copy the contents of one render texture into another. Assumes textures are the same size.
 		public static void CopyRenderTexture(Texture source, RenderTexture target)
 		{
-			Graphics.Blit(source, target);
+			Graphics.CopyTexture(source, target);
 		}
 
 		/// Swap channels of texture, or set to zero. For example, if inputs are: (green, red, zero, zero)

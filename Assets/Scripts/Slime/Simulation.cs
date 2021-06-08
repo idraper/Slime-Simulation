@@ -31,17 +31,16 @@ public class Simulation : MonoBehaviour
 	protected virtual void Start()
 	{
 		Init();
-		transform.GetComponentInChildren<MeshRenderer>().material.mainTexture = displayTexture;
 	}
 
 
 	void Init()
 	{
-
 		// Create render textures
-		ComputeHelper.CreateRenderTexture(ref trailMap, settings.width, settings.height, filterMode, format);
-		ComputeHelper.CreateRenderTexture(ref diffusedTrailMap, settings.width, settings.height, filterMode, format);
-		ComputeHelper.CreateRenderTexture(ref displayTexture, settings.width, settings.height, filterMode, format);
+		ComputeHelper.CreateRenderTexture(ref trailMap, settings.width, settings.height, settings.depth, filterMode, format);
+		ComputeHelper.CreateRenderTexture(ref diffusedTrailMap, settings.width, settings.height, settings.depth, filterMode, format);
+		ComputeHelper.CreateRenderTexture(ref displayTexture, settings.width, settings.height, settings.depth, filterMode, format);
+		transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex", displayTexture);
 
 		// Create agents with initial positions and angles
 		Agent[] agents = new Agent[settings.numAgents];
@@ -88,8 +87,6 @@ public class Simulation : MonoBehaviour
 				speciesMask = new Vector3Int((species == 1) ? 1 : 0, (species == 2) ? 1 : 0, (species == 3) ? 1 : 0);
 			}
 
-
-
 			agents[i] = new Agent() { position = startPos, angle = angle, speciesMask = speciesMask, speciesIndex = speciesIndex };
 		}
 
@@ -101,8 +98,6 @@ public class Simulation : MonoBehaviour
 
 		compute.SetInt("width", settings.width);
 		compute.SetInt("height", settings.height);
-
-
 	}
 
 	void FixedUpdate()
@@ -121,7 +116,6 @@ public class Simulation : MonoBehaviour
 
 			drawAgentsCS.SetTexture(0, "TargetTexture", displayTexture);
 			ComputeHelper.Dispatch(drawAgentsCS, settings.numAgents, 1, 1, 0);
-
 		}
 		else
 		{
@@ -159,7 +153,6 @@ public class Simulation : MonoBehaviour
 
 	void OnDestroy()
 	{
-
 		ComputeHelper.Release(agentBuffer, settingsBuffer);
 	}
 
@@ -171,6 +164,4 @@ public class Simulation : MonoBehaviour
 		int unusedSpeciesChannel;
 		public int speciesIndex;
 	}
-
-
 }

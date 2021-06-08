@@ -1,6 +1,6 @@
 ﻿#pragma kernel ClearTexture
 
-RWTexture2D<float4> Source;
+RWTexture3D<float4> Source;
 uint width;
 uint height;
 
@@ -11,5 +11,5 @@ void ClearTexture (uint3 id : SV_DispatchThreadID)
 		return;
 	}
 
-	Source[id.xy] = 0;
+	Source[int3(id.x,id.y,0)] = 0;
 }

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2665318e53759e74db7a2d8238331945, type: 3}
-  m_Name: C
+  m_Name: Demo1
   m_EditorClassIdentifier: 
   stepsPerFrame: 1
   width: 512
@@ -28,7 +28,7 @@ MonoBehaviour:
     sensorOffsetDst: 35
     sensorSize: 1
   - moveSpeed: 20
-    turnSpeed: 5
+    turnSpeed: 2
     sensorAngleSpacing: 30
     sensorOffsetDst: 100
     sensorSize: 1

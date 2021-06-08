@@ -1,6 +1,6 @@
 ﻿#pragma kernel Swizzle
 
-RWTexture2D<float4> Source;
+RWTexture3D<float4> Source;
 uint width;
 uint height;
 
@@ -17,7 +17,7 @@ void Swizzle (uint3 id : SV_DispatchThreadID)
 		return;
 	}
 
-	float4 colour = Source[id.xy];
+	float4 colour = Source[int3(id.x,id.y,0)];
 
 	// Mask each channel
 	float red = dot(colour, x);
@@ -25,5 +25,5 @@ void Swizzle (uint3 id : SV_DispatchThreadID)
 	float blue = dot(colour, z);
 	float alpha = dot(colour, w);
 
-	Source[id.xy] = float4(red, green, blue, alpha);
+	Source[int3(id.x,id.y,0)] = float4(red, green, blue, alpha);
 }
