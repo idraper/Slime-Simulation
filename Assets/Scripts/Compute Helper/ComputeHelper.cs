@@ -12,7 +12,6 @@
 
 		public const FilterMode defaultFilterMode = FilterMode.Bilinear;
 		public const GraphicsFormat defaultGraphicsFormat = GraphicsFormat.R16G16B16A16_SFloat; //GraphicsFormat.R8G8B8A8_UNorm;
-		public const TextureFormat defaultGraphicsFormatTex = TextureFormat.RGBA32; // TextureFormat.ARGB4444;
 
 		static ComputeShader normalizeTextureCompute;
 		static ComputeShader clearTextureCompute;
@@ -141,12 +140,6 @@
 			Graphics.Blit(source, target);
 		}
 
-		/// Copy the contents of one render texture into another. Assumes textures are the same size.
-		public static void CopyTexture(Texture source, Texture target)
-		{
-			Graphics.CopyTexture(source, target);
-		}
-
 		/// Swap channels of texture, or set to zero. For example, if inputs are: (green, red, zero, zero)
 		/// then red and green channels will be swapped, and blue and alpha channels will be set to zero.
 		public static void SwizzleTexture(Texture texture, Channel x, Channel y, Channel z, Channel w)
@@ -179,45 +172,8 @@
 			Dispatch(clearTextureCompute, source.width, source.height, 1, 0);
 		}
 
-		public static void ClearTexture(Texture3D source)
-		{
-			if (clearTextureCompute == null)
-			{
-				clearTextureCompute = (ComputeShader)Resources.Load("ClearTexture");
-			}
-			clearTextureCompute.SetInt("width", source.width);
-			clearTextureCompute.SetInt("height", source.height);
-			clearTextureCompute.SetTexture(0, "Source", source);
-			Dispatch(clearTextureCompute, source.width, source.height, 1, 0);
-		}
-
 		/// Work in progress, currently only works with one channel and very slow
 		public static void NormalizeRenderTexture(RenderTexture source)
-		{
-			if (normalizeTextureCompute == null)
-			{
-				normalizeTextureCompute = (ComputeShader)Resources.Load("NormalizeTexture");
-			}
-
-			normalizeTextureCompute.SetInt("width", source.width);
-			normalizeTextureCompute.SetInt("height", source.height);
-			normalizeTextureCompute.SetTexture(0, "Source", source);
-			normalizeTextureCompute.SetTexture(1, "Source", source);
-
-			ComputeBuffer minMaxBuffer = CreateAndSetBuffer<int>(new int[] { int.MaxValue, 0 }, normalizeTextureCompute, "minMaxBuffer", 0);
-			normalizeTextureCompute.SetBuffer(1, "minMaxBuffer", minMaxBuffer);
-
-			Dispatch(normalizeTextureCompute, source.width, source.height, 1, 0);
-			Dispatch(normalizeTextureCompute, source.width, source.height, 1, 1);
-
-			//int[] data = new int[2];
-			//minMaxBuffer.GetData(data);
-			//Debug.Log(data[0] + "   " + data[1]);
-
-			Release(minMaxBuffer);
-		}
-
-		public static void NormalizeTexture(Texture3D source)
 		{
 			if (normalizeTextureCompute == null)
 			{
@@ -363,69 +319,6 @@
 #endif
 			bool canRun = !isCompilingOrExitingEditMode;
 			return canRun;
-		}
-
-		// 3d texture conversion helper
-
-		public static int voxelSize = 64;
-		public static RenderTexture Copy3DSliceToRenderTexture(ref RenderTexture source, int layer)
-		{
-			RenderTexture render = new RenderTexture(source.width, source.height, 0, RenderTextureFormat.ARGB32);
-			render.dimension = UnityEngine.Rendering.TextureDimension.Tex2D;
-			render.enableRandomWrite = true;
-			render.wrapMode = TextureWrapMode.Clamp;
-			render.Create();
-
-			if (slicer == null)
-			{
-				slicer = (ComputeShader)Resources.Load("Slicer");
-			}
-
-			int kernelIndex = slicer.FindKernel("Slicer");
-			slicer.SetTexture(kernelIndex, "voxels", source);
-			slicer.SetInt("layer", layer);
-			slicer.SetTexture(kernelIndex, "Result", render);
-			slicer.Dispatch(kernelIndex, voxelSize, voxelSize, 1);
-
-			return render;
-		}
-
-		public static Texture2D ConvertFromRenderTexture(ref RenderTexture rt)
-		{
-				Texture2D output = new Texture2D(voxelSize, voxelSize);
-				RenderTexture.active = rt;
-				output.ReadPixels(new Rect(0, 0, voxelSize, voxelSize), 0, 0);
-				output.Apply();
-				return output;
-		}
-
-		public static void PutRenderTextureIn3D(ref Texture3D output, ref RenderTexture selectedRenderTexture)
-		{
-			RenderTexture[] layers = new RenderTexture[selectedRenderTexture.volumeDepth];
-			for(int i = 0; i < voxelSize; i++)        
-				layers[i] = Copy3DSliceToRenderTexture(ref selectedRenderTexture, i);
-
-			Texture2D[] finalSlices = new Texture2D[voxelSize];
-			for (int i = 0; i < voxelSize; i++)        
-				finalSlices[i] = ConvertFromRenderTexture(ref layers[i]);
-
-			Color[] outputPixels = output.GetPixels();
-
-			for (int k = 0; k < voxelSize; k++)
-			{
-				Color[] layerPixels = finalSlices[k].GetPixels();
-				for (int i = 0; i < voxelSize; i++)
-					for (int j = 0; j < voxelSize; j++)
-					{
-						outputPixels[i + j * voxelSize + k * voxelSize * voxelSize] =
-							layerPixels[i + j * voxelSize];
-					}
-			}
-
-			output.SetPixels(outputPixels);
-			// output.Apply();
-
-			// AssetDatabase.CreateAsset(output, "Assets/" + nameOfTheAsset + ".asset");
 		}
 	}
 }

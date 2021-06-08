@@ -18,83 +18,29 @@ public class Simulation : MonoBehaviour
 	public bool showAgentsOnly;
 	public FilterMode filterMode = FilterMode.Point;
 	public GraphicsFormat format = ComputeHelper.defaultGraphicsFormat;
-	// public TextureFormat format = ComputeHelper.defaultGraphicsFormatTex;
 
 
 	[SerializeField, HideInInspector] protected RenderTexture trailMap;
 	[SerializeField, HideInInspector] protected RenderTexture diffusedTrailMap;
 	[SerializeField, HideInInspector] protected RenderTexture displayTexture;
-	// [SerializeField, HideInInspector] protected Texture3D trailMap;
-	// [SerializeField, HideInInspector] protected Texture3D diffusedTrailMap;
-	// [SerializeField, HideInInspector] protected Texture3D displayTexture;
 
 	ComputeBuffer agentBuffer;
 	ComputeBuffer settingsBuffer;
 	Texture2D colourMapTexture;
 
-	private Texture3D outTex;
-
-	static Texture3D CreateTexture3D()
-	{
-		// Configure the texture
-		int size = 32;
-		TextureFormat format = TextureFormat.RGBA32;
-		TextureWrapMode wrapMode =  TextureWrapMode.Clamp;
-
-		// Create the texture and apply the configuration
-		Texture3D texture = new Texture3D(size, size, size, format, false);
-		texture.wrapMode = wrapMode;
-
-		// Create a 3-dimensional array to store color data
-		Color[] colors = new Color[size * size * size];
-
-		// Populate the array so that the x, y, and z values of the texture will map to red, blue, and green colors
-		float inverseResolution = 1.0f / (size - 1.0f);
-		for (int z = 0; z < size; z++)
-		{
-			int zOffset = z * size * size;
-			for (int y = 0; y < size; y++)
-			{
-				int yOffset = y * size;
-				for (int x = 0; x < size; x++)
-				{
-					colors[x + yOffset + zOffset] = new Color(x * inverseResolution,
-						y * inverseResolution, z * inverseResolution, 1.0f);
-				}
-			}
-		}
-
-		// Copy the color values to the texture
-		texture.SetPixels(colors);
-
-		// Apply the changes to the texture and upload the updated texture to the GPU
-		texture.Apply();        
-
-		// Save the texture to your Unity Project
-		// AssetDatabase.CreateAsset(texture, "Assets/Example3DTexture.asset");
-		return texture;
-	}
-
 	protected virtual void Start()
 	{
 		Init();
-		// ComputeHelper.voxelSize = displayTexture.volumeDepth;
-		ComputeHelper.voxelSize = settings.depth;
-		outTex = new Texture3D(settings.width, settings.height, settings.depth, TextureFormat.RGBA32, false);
-		transform.GetComponentInChildren<MeshRenderer>().material.mainTexture = outTex;
 	}
 
 
 	void Init()
 	{
-
 		// Create render textures
-		// trailMap = new Texture3D(settings.width, settings.height, settings.depth, format, false);
-		// diffusedTrailMap = new Texture3D(settings.width, settings.height, settings.depth, format, false);
-		// displayTexture = new Texture3D(settings.width, settings.height, settings.depth, format, false);
 		ComputeHelper.CreateRenderTexture(ref trailMap, settings.width, settings.height, settings.depth, filterMode, format);
 		ComputeHelper.CreateRenderTexture(ref diffusedTrailMap, settings.width, settings.height, settings.depth, filterMode, format);
 		ComputeHelper.CreateRenderTexture(ref displayTexture, settings.width, settings.height, settings.depth, filterMode, format);
+		transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex", displayTexture);
 
 		// Create agents with initial positions and angles
 		Agent[] agents = new Agent[settings.numAgents];
@@ -141,8 +87,6 @@ public class Simulation : MonoBehaviour
 				speciesMask = new Vector3Int((species == 1) ? 1 : 0, (species == 2) ? 1 : 0, (species == 3) ? 1 : 0);
 			}
 
-
-
 			agents[i] = new Agent() { position = startPos, angle = angle, speciesMask = speciesMask, speciesIndex = speciesIndex };
 		}
 
@@ -154,8 +98,6 @@ public class Simulation : MonoBehaviour
 
 		compute.SetInt("width", settings.width);
 		compute.SetInt("height", settings.height);
-
-
 	}
 
 	void FixedUpdate()
@@ -163,9 +105,6 @@ public class Simulation : MonoBehaviour
 		for (int i = 0; i < settings.stepsPerFrame; i++)
 		{
 			RunSimulation();
-			// ComputeHelper.PutRenderTextureIn3DTexture(ref outTex, ref displayTexture);
-			// ComputeHelper.PutRenderTextureIn3D(ref outTex, ref displayTexture);
-			// outTex.Apply();
 		}
 	}
 
@@ -174,18 +113,13 @@ public class Simulation : MonoBehaviour
 		if (showAgentsOnly)
 		{
 			ComputeHelper.ClearRenderTexture(displayTexture);
-			// ComputeHelper.ClearTexture(displayTexture);
 
 			drawAgentsCS.SetTexture(0, "TargetTexture", displayTexture);
 			ComputeHelper.Dispatch(drawAgentsCS, settings.numAgents, 1, 1, 0);
-
-			transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex", displayTexture);
 		}
 		else
 		{
 			ComputeHelper.CopyRenderTexture(trailMap, displayTexture);
-			// ComputeHelper.CopyTexture(trailMap, displayTexture);
-			transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex", displayTexture);
 		}
 	}
 
@@ -214,12 +148,11 @@ public class Simulation : MonoBehaviour
 		ComputeHelper.Dispatch(compute, settings.numAgents, 1, 1, kernelIndex: updateKernel);
 		ComputeHelper.Dispatch(compute, settings.width, settings.height, 1, kernelIndex: diffuseMapKernel);
 
-		ComputeHelper.CopyTexture(diffusedTrailMap, trailMap);
+		ComputeHelper.CopyRenderTexture(diffusedTrailMap, trailMap);
 	}
 
 	void OnDestroy()
 	{
-
 		ComputeHelper.Release(agentBuffer, settingsBuffer);
 	}
 
@@ -231,6 +164,4 @@ public class Simulation : MonoBehaviour
 		int unusedSpeciesChannel;
 		public int speciesIndex;
 	}
-
-
 }
