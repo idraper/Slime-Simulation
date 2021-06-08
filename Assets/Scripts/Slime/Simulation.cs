@@ -18,11 +18,15 @@ public class Simulation : MonoBehaviour
 	public bool showAgentsOnly;
 	public FilterMode filterMode = FilterMode.Point;
 	public GraphicsFormat format = ComputeHelper.defaultGraphicsFormat;
+	// public TextureFormat format = ComputeHelper.defaultGraphicsFormatTex;
 
 
 	[SerializeField, HideInInspector] protected RenderTexture trailMap;
 	[SerializeField, HideInInspector] protected RenderTexture diffusedTrailMap;
 	[SerializeField, HideInInspector] protected RenderTexture displayTexture;
+	// [SerializeField, HideInInspector] protected Texture3D trailMap;
+	// [SerializeField, HideInInspector] protected Texture3D diffusedTrailMap;
+	// [SerializeField, HideInInspector] protected Texture3D displayTexture;
 
 	ComputeBuffer agentBuffer;
 	ComputeBuffer settingsBuffer;
@@ -71,21 +75,12 @@ public class Simulation : MonoBehaviour
 		return texture;
 	}
 
-	// Texture2D toTexture2D(RenderTexture rTex)
-	// {
-	// 	Texture2D tex = new Texture2D(rTex.width, rTex.height, rTex.format, false);
-	// 	// ReadPixels looks at the active RenderTexture.
-	// 	RenderTexture.active = rTex;
-	// 	tex.ReadPixels(new Rect(0, 0, rTex.width, rTex.height), 0, 0);
-	// 	tex.Apply();
-	// 	return tex;
-	// }
-
 	protected virtual void Start()
 	{
 		Init();
-		ComputeHelper.voxelSize = displayTexture.volumeDepth;
-		outTex = new Texture3D(displayTexture.width, displayTexture.height, displayTexture.volumeDepth, TextureFormat.RGBA32, true);
+		// ComputeHelper.voxelSize = displayTexture.volumeDepth;
+		ComputeHelper.voxelSize = settings.depth;
+		outTex = new Texture3D(settings.width, settings.height, settings.depth, TextureFormat.RGBA32, false);
 		transform.GetComponentInChildren<MeshRenderer>().material.mainTexture = outTex;
 	}
 
@@ -94,6 +89,9 @@ public class Simulation : MonoBehaviour
 	{
 
 		// Create render textures
+		// trailMap = new Texture3D(settings.width, settings.height, settings.depth, format, false);
+		// diffusedTrailMap = new Texture3D(settings.width, settings.height, settings.depth, format, false);
+		// displayTexture = new Texture3D(settings.width, settings.height, settings.depth, format, false);
 		ComputeHelper.CreateRenderTexture(ref trailMap, settings.width, settings.height, settings.depth, filterMode, format);
 		ComputeHelper.CreateRenderTexture(ref diffusedTrailMap, settings.width, settings.height, settings.depth, filterMode, format);
 		ComputeHelper.CreateRenderTexture(ref displayTexture, settings.width, settings.height, settings.depth, filterMode, format);
@@ -165,8 +163,9 @@ public class Simulation : MonoBehaviour
 		for (int i = 0; i < settings.stepsPerFrame; i++)
 		{
 			RunSimulation();
-			ComputeHelper.PutRenderTextureIn3D(ref outTex, ref displayTexture);
-			outTex.Apply();
+			// ComputeHelper.PutRenderTextureIn3DTexture(ref outTex, ref displayTexture);
+			// ComputeHelper.PutRenderTextureIn3D(ref outTex, ref displayTexture);
+			// outTex.Apply();
 		}
 	}
 
@@ -175,6 +174,7 @@ public class Simulation : MonoBehaviour
 		if (showAgentsOnly)
 		{
 			ComputeHelper.ClearRenderTexture(displayTexture);
+			// ComputeHelper.ClearTexture(displayTexture);
 
 			drawAgentsCS.SetTexture(0, "TargetTexture", displayTexture);
 			ComputeHelper.Dispatch(drawAgentsCS, settings.numAgents, 1, 1, 0);
@@ -183,6 +183,7 @@ public class Simulation : MonoBehaviour
 		else
 		{
 			ComputeHelper.CopyRenderTexture(trailMap, displayTexture);
+			// ComputeHelper.CopyTexture(trailMap, displayTexture);
 		}
 	}
 
@@ -211,7 +212,9 @@ public class Simulation : MonoBehaviour
 		ComputeHelper.Dispatch(compute, settings.numAgents, 1, 1, kernelIndex: updateKernel);
 		ComputeHelper.Dispatch(compute, settings.width, settings.height, 1, kernelIndex: diffuseMapKernel);
 
-		ComputeHelper.CopyRenderTexture(diffusedTrailMap, trailMap);
+		ComputeHelper.CopyTexture(diffusedTrailMap, trailMap);
+
+		transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("Data", displayTexture);
 	}
 
 	void OnDestroy()
