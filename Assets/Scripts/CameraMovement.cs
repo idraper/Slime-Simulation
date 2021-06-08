@@ -20,5 +20,10 @@ public class CameraMovement : MonoBehaviour
         transform.position +=
             Input.GetAxis("Horizontal") * moveSpeed * transform.right +
             Input.GetAxis("Vertical") * moveSpeed * transform.forward;
+
+        int vDir = 0;
+        if (Input.GetKey("r")) vDir = 10;
+        if (Input.GetKey("f")) vDir = -10;
+        transform.position += transform.up*moveSpeed*vDir*Time.deltaTime;
     }
 }

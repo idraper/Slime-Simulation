@@ -122,7 +122,7 @@
 				texture = new RenderTexture(width, height, 0);
 				texture.dimension = TextureDimension.Tex3D;
 				texture.volumeDepth = depth;
-				texture.isPowerOfTwo = true;
+				// texture.isPowerOfTwo = true;
 
 				texture.graphicsFormat = format;
 				texture.enableRandomWrite = true;
@@ -137,7 +137,7 @@
 		/// Copy the contents of one render texture into another. Assumes textures are the same size.
 		public static void CopyRenderTexture(Texture source, RenderTexture target)
 		{
-			Graphics.Blit(source, target);
+			Graphics.CopyTexture(source, target);
 		}
 
 		/// Swap channels of texture, or set to zero. For example, if inputs are: (green, red, zero, zero)
