@@ -5,7 +5,6 @@ Shader "Unlit/VolumeShader"
         _MainTex ("Texture", 3D) = "white" {}
         _Alpha ("Alpha", float) = 0.02
         _StepSize ("Step Size", float) = 0.01
-        _Data ("Data", 3D) = "" {}
     }
     SubShader
     {
@@ -39,8 +38,8 @@ Shader "Unlit/VolumeShader"
                 float3 vectorToSurface : TEXCOORD1;
             };
 
-            sampler3D _Data;
-            float4 _Data_ST;
+            sampler3D _MainTex;
+            float4 _MainTex_ST;
             float _Alpha;
             float _StepSize;
 
@@ -83,7 +82,7 @@ Shader "Unlit/VolumeShader"
                     // Accumulate color only within unit cube bounds
                     if(max(abs(samplePosition.x), max(abs(samplePosition.y), abs(samplePosition.z))) < 0.5f + EPSILON)
                     {
-                        float4 sampledColor = tex3D(_Data, samplePosition + float3(0.5f, 0.5f, 0.5f));
+                        float4 sampledColor = tex3D(_MainTex, samplePosition + float3(0.5f, 0.5f, 0.5f));
                         sampledColor.a *= _Alpha;
                         color = BlendUnder(color, sampledColor);
                         samplePosition += rayDirection * _StepSize;

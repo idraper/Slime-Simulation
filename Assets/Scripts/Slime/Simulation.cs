@@ -179,11 +179,13 @@ public class Simulation : MonoBehaviour
 			drawAgentsCS.SetTexture(0, "TargetTexture", displayTexture);
 			ComputeHelper.Dispatch(drawAgentsCS, settings.numAgents, 1, 1, 0);
 
+			transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex", displayTexture);
 		}
 		else
 		{
 			ComputeHelper.CopyRenderTexture(trailMap, displayTexture);
 			// ComputeHelper.CopyTexture(trailMap, displayTexture);
+			transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex", displayTexture);
 		}
 	}
 
@@ -213,8 +215,6 @@ public class Simulation : MonoBehaviour
 		ComputeHelper.Dispatch(compute, settings.width, settings.height, 1, kernelIndex: diffuseMapKernel);
 
 		ComputeHelper.CopyTexture(diffusedTrailMap, trailMap);
-
-		transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("Data", displayTexture);
 	}
 
 	void OnDestroy()
