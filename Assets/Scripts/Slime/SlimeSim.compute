@@ -187,7 +187,7 @@ void Diffuse (uint3 id : SV_DispatchThreadID)
 		}
 	}
 
-	float4 blurredCol = sum / 9;
+	float4 blurredCol = sum / 27;
 	float diffuseWeight = saturate(diffuseRate * deltaTime);
 	blurredCol = originalCol * (1 - diffuseWeight) + blurredCol * (diffuseWeight);
 
