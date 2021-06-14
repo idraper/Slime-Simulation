@@ -23,6 +23,7 @@ void DrawAgentMap (uint3 id : SV_DispatchThreadID)
 	Agent agent = agents[id.x];
 	// Draw to trail map
 	int cellX = (int)agent.position.x;
-	int cellY = (int)agent.position.y;
-	TargetTexture[int3(cellX,cellY,id.z)] = 1;
+	int cellY = (int)agent.position.y;	
+	int cellZ = (int) agent.position.z;
+	TargetTexture[int3(cellX,cellY,cellZ)] = 1;
 }
