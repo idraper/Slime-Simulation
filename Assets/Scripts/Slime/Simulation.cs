@@ -46,30 +46,34 @@ public class Simulation : MonoBehaviour
 		Agent[] agents = new Agent[settings.numAgents];
 		for (int i = 0; i < agents.Length; i++)
 		{
-			Vector2 centre = new Vector2(settings.width / 2, settings.height / 2);
-			Vector2 startPos = Vector2.zero;
-			float randomAngle = Random.value * Mathf.PI * 2;
-			float angle = 0;
+			Vector3 centre = new Vector3(settings.width / 2, settings.height / 2, settings.depth / 2);
+			Vector3 startPos = Vector3.zero;
+			Vector2 angles = new Vector2(0,Mathf.PI / 2);//Phi(x-y), theta(z)
+			Vector2 randomAngles = new Vector2(Random.value * Mathf.PI * 2, Random.value * Mathf.PI * 2);			
 
 			if (settings.spawnMode == SpawnMode.Point)
 			{
 				startPos = centre;
-				angle = randomAngle;
+				angles = randomAngles;
 			}
 			else if (settings.spawnMode == SpawnMode.Random)
 			{
 				startPos = new Vector2(Random.Range(0, settings.width), Random.Range(0, settings.height));
-				angle = randomAngle;
+				angles = randomAngles;
 			}
 			else if (settings.spawnMode == SpawnMode.InwardCircle)
 			{
-				startPos = centre + Random.insideUnitCircle * settings.height * 0.5f;
-				angle = Mathf.Atan2((centre - startPos).normalized.y, (centre - startPos).normalized.x);
+				startPos = centre + Random.insideUnitSphere * settings.height * 0.5f;
+				Vector3 loc = (centre - startPos);
+
+				float phi = Mathf.Atan2(loc.normalized.y, loc.normalized.x);
+				float theta = Mathf.Atan2(Mathf.Sqrt(Mathf.Pow(loc.x,2) + Mathf.Pow(loc.y,2)), loc.z);
+				angles = new Vector2(phi, theta);
 			}
 			else if (settings.spawnMode == SpawnMode.RandomCircle)
 			{
-				startPos = centre + Random.insideUnitCircle * settings.height * 0.15f;
-				angle = randomAngle;
+				startPos = centre + Random.insideUnitSphere * settings.height * 0.15f;
+				angles = randomAngles;
 			}
 
 			Vector3Int speciesMask;
@@ -87,7 +91,7 @@ public class Simulation : MonoBehaviour
 				speciesMask = new Vector3Int((species == 1) ? 1 : 0, (species == 2) ? 1 : 0, (species == 3) ? 1 : 0);
 			}
 
-			agents[i] = new Agent() { position = startPos, angle = angle, speciesMask = speciesMask, speciesIndex = speciesIndex };
+			agents[i] = new Agent() { position = startPos, angles = angles, speciesMask = speciesMask, speciesIndex = speciesIndex };
 		}
 
 		ComputeHelper.CreateAndSetBuffer<Agent>(ref agentBuffer, agents, compute, "agents", updateKernel);
@@ -158,8 +162,8 @@ public class Simulation : MonoBehaviour
 
 	public struct Agent
 	{
-		public Vector2 position;
-		public float angle;
+		public Vector3 position;
+		public Vector2 angles;
 		public Vector3Int speciesMask;
 		int unusedSpeciesChannel;
 		public int speciesIndex;
