@@ -3,13 +3,14 @@
 RWTexture3D<float4> Source;
 uint width;
 uint height;
+uint depth;
 
 [numthreads(8,8,1)]
 void ClearTexture (uint3 id : SV_DispatchThreadID)
 {
-	if (id.x < 0 || id.x >= width || id.y < 0 || id.y >= height) {
+	if (id.x < 0 || id.x >= width || id.y < 0 || id.y >= height || id.z < 0 || id.z >= depth) {
 		return;
 	}
 
-	Source[int3(id.x,id.y,0)] = 0;
+	Source[int3(id.x,id.y,id.z)] = 0;
 }

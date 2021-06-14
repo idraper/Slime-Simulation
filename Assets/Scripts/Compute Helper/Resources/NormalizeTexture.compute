@@ -4,6 +4,7 @@ static const int intScalar = 100000;
 RWTexture3D<float4> Source;
 uint width;
 uint height;
+uint depth;
 
 RWStructuredBuffer<int> minMaxBuffer;
 
@@ -11,11 +12,11 @@ RWStructuredBuffer<int> minMaxBuffer;
 void CalculateMinMax (uint3 id : SV_DispatchThreadID)
 {
 	
-	if (id.x < 0 || id.x >= width || id.y < 0 || id.y >= height) {
+	if (id.x < 0 || id.x >= width || id.y < 0 || id.y >= height || id.z < 0 || id.z >= depth) {
 		return;
 	}
 
-	float value = Source[int3(id.x,id.y,0)].x;
+	float value = Source[int3(id.x,id.y,id.z)].x;
 	int valueInt = (int)(value * intScalar);
 
 	InterlockedMin(minMaxBuffer[0], valueInt);
@@ -27,15 +28,15 @@ void CalculateMinMax (uint3 id : SV_DispatchThreadID)
 void NormalizeTexture (uint3 id : SV_DispatchThreadID)
 {
 	
-	if (id.x < 0 || id.x >= width || id.y < 0 || id.y >= height) {
+	if (id.x < 0 || id.x >= width || id.y < 0 || id.y >= height || id.z < 0 || id.z >= depth) {
 		return;
 	}
 
 	float minValue = (float)minMaxBuffer[0] / intScalar;
 	float maxValue = (float)minMaxBuffer[1] / intScalar;
 
-	float value = Source[int3(id.x,id.y,0)].x;
+	float value = Source[int3(id.x,id.y,id.z)].x;
 	float normalizedValue = (value - minValue) / (maxValue - minValue);
 
-	Source[int3(id.x,id.y,0)] = normalizedValue;
+	Source[int3(id.x,id.y,id.z)] = normalizedValue;
 }

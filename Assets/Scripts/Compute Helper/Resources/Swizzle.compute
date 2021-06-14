@@ -3,6 +3,7 @@
 RWTexture3D<float4> Source;
 uint width;
 uint height;
+uint depth;
 
 // Masks
 float4 x;
@@ -13,11 +14,11 @@ float4 w;
 [numthreads(8,8,1)]
 void Swizzle (uint3 id : SV_DispatchThreadID)
 {
-	if (id.x < 0 || id.x >= width || id.y < 0 || id.y >= height) {
+	if (id.x < 0 || id.x >= width || id.y < 0 || id.y >= height || id.z < 0 || id.z >= depth) {
 		return;
 	}
 
-	float4 colour = Source[int3(id.x,id.y,0)];
+	float4 colour = Source[int3(id.x,id.y,id.z)];
 
 	// Mask each channel
 	float red = dot(colour, x);
@@ -25,5 +26,5 @@ void Swizzle (uint3 id : SV_DispatchThreadID)
 	float blue = dot(colour, z);
 	float alpha = dot(colour, w);
 
-	Source[int3(id.x,id.y,0)] = float4(red, green, blue, alpha);
+	Source[int3(id.x,id.y,id.z)] = float4(red, green, blue, alpha);
 }
