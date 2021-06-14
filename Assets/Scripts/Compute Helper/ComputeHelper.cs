@@ -142,7 +142,7 @@
 
 		/// Swap channels of texture, or set to zero. For example, if inputs are: (green, red, zero, zero)
 		/// then red and green channels will be swapped, and blue and alpha channels will be set to zero.
-		public static void SwizzleTexture(Texture texture, Channel x, Channel y, Channel z, Channel w)
+		public static void SwizzleTexture(RenderTexture texture, Channel x, Channel y, Channel z, Channel w)
 		{
 			if (swizzleTextureCompute == null)
 			{
@@ -151,13 +151,13 @@
 
 			swizzleTextureCompute.SetInt("width", texture.width);
 			swizzleTextureCompute.SetInt("height", texture.height);
-			swizzleTextureCompute.SetInt("depth", texture.depth);
+			swizzleTextureCompute.SetInt("depth", texture.volumeDepth);
 			swizzleTextureCompute.SetTexture(0, "Source", texture);
 			swizzleTextureCompute.SetVector("x", ChannelToMask(x));
 			swizzleTextureCompute.SetVector("y", ChannelToMask(y));
 			swizzleTextureCompute.SetVector("z", ChannelToMask(z));
 			swizzleTextureCompute.SetVector("w", ChannelToMask(w));
-			Dispatch(swizzleTextureCompute, texture.width, texture.height, texture.depth, 0);
+			Dispatch(swizzleTextureCompute, texture.width, texture.height, texture.volumeDepth, 0);
 		}
 
 		/// Sets all pixels of supplied texture to 0
@@ -169,9 +169,9 @@
 			}
 			clearTextureCompute.SetInt("width", source.width);
 			clearTextureCompute.SetInt("height", source.height);
-			swizzleTextureCompute.SetInt("depth", source.depth);
+			swizzleTextureCompute.SetInt("depth", source.volumeDepth);
 			clearTextureCompute.SetTexture(0, "Source", source);
-			Dispatch(clearTextureCompute, source.width, source.height, source.depth, 0);
+			Dispatch(clearTextureCompute, source.width, source.height, source.volumeDepth, 0);
 		}
 
 		/// Work in progress, currently only works with one channel and very slow
@@ -184,7 +184,7 @@
 
 			normalizeTextureCompute.SetInt("width", source.width);
 			normalizeTextureCompute.SetInt("height", source.height);
-			swizzleTextureCompute.SetInt("depth", source.depth);
+			swizzleTextureCompute.SetInt("depth", source.volumeDepth);
 			normalizeTextureCompute.SetTexture(0, "Source", source);
 			normalizeTextureCompute.SetTexture(1, "Source", source);
 
@@ -193,8 +193,8 @@
 			
 			//Todo: double check that source.depth ought to be the 4th parameter - what is the 5th parameter?
 			//The 4th paramter was originally 1 for both method calls
-			Dispatch(normalizeTextureCompute, source.width, source.height, source.depth, 0);
-			Dispatch(normalizeTextureCompute, source.width, source.height, source.depth, 1);
+			Dispatch(normalizeTextureCompute, source.width, source.height, source.volumeDepth, 0);
+			Dispatch(normalizeTextureCompute, source.width, source.height, source.volumeDepth, 1);
 
 			//int[] data = new int[2];
 			//minMaxBuffer.GetData(data);
