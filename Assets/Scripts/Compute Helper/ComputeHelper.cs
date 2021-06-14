@@ -113,15 +113,15 @@
 
 		public static void CreateRenderTexture(ref RenderTexture texture, int width, int height, int depth, FilterMode filterMode, GraphicsFormat format)
 		{
-			if (texture == null || !texture.IsCreated() || texture.width != width || texture.height != height || texture.graphicsFormat != format)
+			if (texture == null || !texture.IsCreated() || texture.width != width || texture.height != height || texture.depth != depth || texture.graphicsFormat != format)
 			{
 				if (texture != null)
 				{
 					texture.Release();
 				}
-				texture = new RenderTexture(width, height, 0);
+				texture = new RenderTexture(width, height, depth);
 				texture.dimension = TextureDimension.Tex3D;
-				texture.volumeDepth = depth;
+				texture.depth = depth;
 				// texture.isPowerOfTwo = true;
 
 				texture.graphicsFormat = format;
@@ -151,12 +151,13 @@
 
 			swizzleTextureCompute.SetInt("width", texture.width);
 			swizzleTextureCompute.SetInt("height", texture.height);
+			swizzleTextureCompute.SetInt("depth", texture.depth);
 			swizzleTextureCompute.SetTexture(0, "Source", texture);
 			swizzleTextureCompute.SetVector("x", ChannelToMask(x));
 			swizzleTextureCompute.SetVector("y", ChannelToMask(y));
 			swizzleTextureCompute.SetVector("z", ChannelToMask(z));
 			swizzleTextureCompute.SetVector("w", ChannelToMask(w));
-			Dispatch(swizzleTextureCompute, texture.width, texture.height, 1, 0);
+			Dispatch(swizzleTextureCompute, texture.width, texture.height, texture.depth, 0);
 		}
 
 		/// Sets all pixels of supplied texture to 0
@@ -168,8 +169,9 @@
 			}
 			clearTextureCompute.SetInt("width", source.width);
 			clearTextureCompute.SetInt("height", source.height);
+			swizzleTextureCompute.SetInt("depth", source.depth);
 			clearTextureCompute.SetTexture(0, "Source", source);
-			Dispatch(clearTextureCompute, source.width, source.height, 1, 0);
+			Dispatch(clearTextureCompute, source.width, source.height, source.depth, 0);
 		}
 
 		/// Work in progress, currently only works with one channel and very slow
@@ -182,14 +184,17 @@
 
 			normalizeTextureCompute.SetInt("width", source.width);
 			normalizeTextureCompute.SetInt("height", source.height);
+			swizzleTextureCompute.SetInt("depth", source.depth);
 			normalizeTextureCompute.SetTexture(0, "Source", source);
 			normalizeTextureCompute.SetTexture(1, "Source", source);
 
 			ComputeBuffer minMaxBuffer = CreateAndSetBuffer<int>(new int[] { int.MaxValue, 0 }, normalizeTextureCompute, "minMaxBuffer", 0);
 			normalizeTextureCompute.SetBuffer(1, "minMaxBuffer", minMaxBuffer);
-
-			Dispatch(normalizeTextureCompute, source.width, source.height, 1, 0);
-			Dispatch(normalizeTextureCompute, source.width, source.height, 1, 1);
+			
+			//Todo: double check that source.depth ought to be the 4th parameter - what is the 5th parameter?
+			//The 4th paramter was originally 1 for both method calls
+			Dispatch(normalizeTextureCompute, source.width, source.height, source.depth, 0);
+			Dispatch(normalizeTextureCompute, source.width, source.height, source.depth, 1);
 
 			//int[] data = new int[2];
 			//minMaxBuffer.GetData(data);
