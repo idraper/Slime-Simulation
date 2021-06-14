@@ -2,7 +2,7 @@
 
 struct Agent {
 	float3 position;
-	float2 angle;
+	float2 angles;
 	int4 speciesMask;
 	int speciesIndex;
 };
@@ -51,8 +51,8 @@ float scaleToRange01(uint state)
 
 
 float sense(Agent agent, SpeciesSettings settings, float sensorAngleOffset) {
-	float2 sensorAngle = agent.angle + float2(sensorAngleOffset,sensorAngleOffset);	
-	float3 sensorDir = float3(cos(sensorAngle.x)*sin(sensorAngle.y), sin(sensorAngle)*sin(sensorAngle.y), cos(sensorAngle.y));
+	float2 sensorAngles = agent.angles + float2(sensorAngleOffset,sensorAngleOffset);	
+	float3 sensorDir = float3(cos(sensorAngles.x)*sin(sensorAngles.y), sin(sensorAngles.x)*sin(sensorAngles.y), cos(sensorAngles.y));
 
 	float3 sensorPos = agent.position + sensorDir * settings.sensorOffsetDst;
 	int sensorCentreX = (int) sensorPos.x;
@@ -67,7 +67,7 @@ float sense(Agent agent, SpeciesSettings settings, float sensorAngleOffset) {
 			for (int offsetZ = -settings.sensorSize; offsetZ <= settings.sensorSize; offsetZ ++) {
 				int sampleX = min(width - 1, max(0, sensorCentreX + offsetX));
 				int sampleY = min(height - 1, max(0, sensorCentreY + offsetY));
-				int sampleZ = min(depth - 1, max(0, sensorCentreZ + offsetZ))
+				int sampleZ = min(depth - 1, max(0, sensorCentreZ + offsetZ));
 				sum += dot(senseWeight, TrailMap[int3(sampleX,sampleY,sampleZ)]);
 			}
 		}
@@ -105,40 +105,40 @@ void Update (uint3 id : SV_DispatchThreadID)
 	// Update phi (x-y) angle
 	// Continue in same direction
 	if (weightForward > weightLeft && weightForward > weightRight) {
-		agents[id.x].angle.x += 0;
+		agents[id.x].angles.x += 0;
 	}
 	else if (weightForward < weightLeft && weightForward < weightRight) {
-		agents[id.x].angle.x += (randomSteerStrength - 0.5) * 2 * turnSpeed * deltaTime;
+		agents[id.x].angles.x += (randomSteerStrength - 0.5) * 2 * turnSpeed * deltaTime;
 	}
 	// Turn right
 	else if (weightRight > weightLeft) {
-		agents[id.x].angle.x -= randomSteerStrength * turnSpeed * deltaTime;
+		agents[id.x].angles.x -= randomSteerStrength * turnSpeed * deltaTime;
 	}
 	// Turn left
 	else if (weightLeft > weightRight) {
-		agents[id.x].angle.x += randomSteerStrength * turnSpeed * deltaTime;
+		agents[id.x].angles.x += randomSteerStrength * turnSpeed * deltaTime;
 	}
 
 	//Update theta (z) angle
 	// Continue in same direction
 	if (weightForward > weightDown && weightForward > weightUp) {
-		agents[id.x].angle.y += 0;
+		agents[id.x].angles.y += 0;
 	}
 	else if (weightForward < weightDown && weightForward < weightUp) {
-		agents[id.x].angle.y += (randomSteerStrength - 0.5) * 2 * turnSpeed * deltaTime;
+		agents[id.x].angles.y += (randomSteerStrength - 0.5) * 2 * turnSpeed * deltaTime;
 	}
 	// Turn up
 	else if (weightUp > weightDown) {
-		agents[id.x].angle.y -= randomSteerStrength * turnSpeed * deltaTime;
+		agents[id.x].angles.y -= randomSteerStrength * turnSpeed * deltaTime;
 	}
 	// Turn right
-	else if (weightDown > weighweightUptRight) {
-		agents[id.x].angle.y += randomSteerStrength * turnSpeed * deltaTime;
+	else if (weightDown > weightUp) {
+		agents[id.x].angles.y += randomSteerStrength * turnSpeed * deltaTime;
 	}
 
 
 	// Update position	
-	float3 direction = float3(cos(agent.angle.x)*sin(agent.angle.y), sin(agent.angle.x)*sin(agent.angle.y), cos(agent.angle.y));
+	float3 direction = float3(cos(agent.angles.x)*sin(agent.angles.y), sin(agent.angles.x)*sin(agent.angles.y), cos(agent.angles.y));
 	float3 newPos = agent.position + direction * deltaTime * settings.moveSpeed;
 
 	
@@ -149,7 +149,8 @@ void Update (uint3 id : SV_DispatchThreadID)
 
 		newPos.x = min(width-1,max(0, newPos.x));
 		newPos.y = min(height-1,max(0, newPos.y));
-		agents[id.x].angle = randomAngle;
+		newPos.z = min(depth-1,max(0, newPos.z));
+		agents[id.x].angles = float2(randomAngle, randomAngle);
 	}
 	else {
 		float4 oldTrail = TrailMap[int3(newPos.x,newPos.y,newPos.z)];

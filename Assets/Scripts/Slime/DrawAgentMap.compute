@@ -2,7 +2,7 @@
 
 struct Agent {
 	float3 position;
-	float angle;
+	float2 angles;
 	float4 mask;
 	int speciesIndex;
 };
