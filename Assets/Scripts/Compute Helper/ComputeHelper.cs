@@ -113,15 +113,15 @@
 
 		public static void CreateRenderTexture(ref RenderTexture texture, int width, int height, int depth, FilterMode filterMode, GraphicsFormat format)
 		{
-			if (texture == null || !texture.IsCreated() || texture.width != width || texture.height != height || texture.depth != depth || texture.graphicsFormat != format)
+			if (texture == null || !texture.IsCreated() || texture.width != width || texture.height != height || texture.volumeDepth != depth || texture.graphicsFormat != format)
 			{
 				if (texture != null)
 				{
 					texture.Release();
 				}
-				texture = new RenderTexture(width, height, depth);
+				texture = new RenderTexture(width, height, 0);
 				texture.dimension = TextureDimension.Tex3D;
-				texture.depth = depth;
+				texture.volumeDepth = depth;
 				// texture.isPowerOfTwo = true;
 
 				texture.graphicsFormat = format;
@@ -135,7 +135,7 @@
 		}
 
 		/// Copy the contents of one render texture into another. Assumes textures are the same size.
-		public static void CopyRenderTexture(Texture source, RenderTexture target)
+		public static void CopyRenderTexture(RenderTexture source, RenderTexture target)
 		{
 			Graphics.CopyTexture(source, target);
 		}
@@ -169,7 +169,7 @@
 			}
 			clearTextureCompute.SetInt("width", source.width);
 			clearTextureCompute.SetInt("height", source.height);
-			swizzleTextureCompute.SetInt("depth", source.volumeDepth);
+			clearTextureCompute.SetInt("depth", source.volumeDepth);
 			clearTextureCompute.SetTexture(0, "Source", source);
 			Dispatch(clearTextureCompute, source.width, source.height, source.volumeDepth, 0);
 		}
@@ -184,7 +184,7 @@
 
 			normalizeTextureCompute.SetInt("width", source.width);
 			normalizeTextureCompute.SetInt("height", source.height);
-			swizzleTextureCompute.SetInt("depth", source.volumeDepth);
+			normalizeTextureCompute.SetInt("depth", source.volumeDepth);
 			normalizeTextureCompute.SetTexture(0, "Source", source);
 			normalizeTextureCompute.SetTexture(1, "Source", source);
 
