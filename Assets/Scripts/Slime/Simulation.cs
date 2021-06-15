@@ -120,7 +120,7 @@ public class Simulation : MonoBehaviour
 			ComputeHelper.ClearRenderTexture(displayTexture);
 
 			drawAgentsCS.SetTexture(0, "TargetTexture", displayTexture);
-			ComputeHelper.Dispatch(drawAgentsCS, settings.numAgents, 1, 1, 1);
+			ComputeHelper.Dispatch(drawAgentsCS, settings.numAgents, 1, 1, 0);
 		}
 		else
 		{
