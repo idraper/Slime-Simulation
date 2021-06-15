@@ -62,14 +62,23 @@ float sense(Agent agent, SpeciesSettings settings, float sensorAngleOffset) {
 
 	int4 senseWeight = agent.speciesMask * 2 - 1;
 
+	// for (int offsetX = -settings.sensorSize; offsetX <= settings.sensorSize; offsetX ++) {
+	// 	for (int offsetY = -settings.sensorSize; offsetY <= settings.sensorSize; offsetY ++) {
+	// 		for (int offsetZ = -settings.sensorSize; offsetZ <= settings.sensorSize; offsetZ ++) {
+	// 			int sampleX = min(width - 1, max(0, sensorCentreX + offsetX));
+	// 			int sampleY = min(height - 1, max(0, sensorCentreY + offsetY));
+	// 			int sampleZ = min(depth - 1, max(0, sensorCentreZ + offsetZ));
+	// 			sum += dot(senseWeight, TrailMap[int3(sampleX,sampleY,sampleZ)]);
+	// 		}
+	// 	}
+	// }
+
+	//Ignore sampling in z for now
 	for (int offsetX = -settings.sensorSize; offsetX <= settings.sensorSize; offsetX ++) {
-		for (int offsetY = -settings.sensorSize; offsetY <= settings.sensorSize; offsetY ++) {
-			for (int offsetZ = -settings.sensorSize; offsetZ <= settings.sensorSize; offsetZ ++) {
-				int sampleX = min(width - 1, max(0, sensorCentreX + offsetX));
-				int sampleY = min(height - 1, max(0, sensorCentreY + offsetY));
-				int sampleZ = min(depth - 1, max(0, sensorCentreZ + offsetZ));
-				sum += dot(senseWeight, TrailMap[int3(sampleX,sampleY,sampleZ)]);
-			}
+		for (int offsetY = -settings.sensorSize; offsetY <= settings.sensorSize; offsetY ++) {			
+			int sampleX = min(width - 1, max(0, sensorCentreX + offsetX));
+			int sampleY = min(height - 1, max(0, sensorCentreY + offsetY));			
+			sum += dot(senseWeight, TrailMap[int3(sampleX,sampleY,0)]);			
 		}
 	}
 
@@ -88,15 +97,19 @@ void Update (uint3 id : SV_DispatchThreadID)
 	SpeciesSettings settings = speciesSettings[agent.speciesIndex];
 	float3 pos = agent.position;
 
-	uint random = hash(pos.y * width + pos.x + hash(id.x + time * 100000));
+	uint random = hash(pos.y * width + pos.x + pos.z * depth + hash(id.x + time * 100000));
 
 	// Steer based on sensory data
 	float2 sensorAngleRad = settings.sensorAngleDegrees * (3.1415 / 180);
 	float weightForward = sense(agent, settings, 0);
 	float weightLeft = sense(agent, settings, sensorAngleRad.x);
 	float weightRight = sense(agent, settings, -sensorAngleRad.x);
-	float weightUp = sense(agent, settings, -sensorAngleRad.y);
-	float weightDown = sense(agent, settings, sensorAngleRad.y);
+
+	//Randomly assign values for up and down weights
+	float weightUp = scaleToRange01(hash(weightLeft)) * depth;
+	float weightDown = scaleToRange01(hash(weightRight)) * depth;
+	// float weightUp = sense(agent, settings, -sensorAngleRad.y);
+	// float weightDown = sense(agent, settings, sensorAngleRad.y);
 
 	
 	float randomSteerStrength = scaleToRange01(random);
@@ -125,7 +138,7 @@ void Update (uint3 id : SV_DispatchThreadID)
 		agents[id.x].angles.y += 0;
 	}
 	else if (weightForward < weightDown && weightForward < weightUp) {
-		agents[id.x].angles.y += (randomSteerStrength - 0.5) * 2 * turnSpeed * deltaTime;
+		agents[id.x].angles.y += (randomSteerStrength - 0.5) * 2 * turnSpeed/2 * deltaTime;
 	}
 	// Turn up
 	else if (weightUp > weightDown) {
@@ -150,7 +163,7 @@ void Update (uint3 id : SV_DispatchThreadID)
 		newPos.x = min(width-1,max(0, newPos.x));
 		newPos.y = min(height-1,max(0, newPos.y));
 		newPos.z = min(depth-1,max(0, newPos.z));
-		agents[id.x].angles = float2(randomAngle, randomAngle);
+		agents[id.x].angles = float2(randomAngle, randomAngle / 2);
 	}
 	else {
 		float4 oldTrail = TrailMap[int3(newPos.x,newPos.y,newPos.z)];
