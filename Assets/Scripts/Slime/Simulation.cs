@@ -64,7 +64,7 @@ public class Simulation : MonoBehaviour
 			else if (settings.spawnMode == SpawnMode.InwardCircle)
 			{
 				startPos = centre + Random.insideUnitSphere * settings.height * 0.5f;
-				Vector3 loc = (centre - startPos).normalized;
+				Vector3 loc = (centre - startPos);
 
 				float phi = Mathf.Atan2(loc.normalized.y, loc.normalized.x);
 				float theta = Mathf.Atan2(Mathf.Sqrt(Mathf.Pow(loc.x,2) + Mathf.Pow(loc.y,2)), loc.z);
