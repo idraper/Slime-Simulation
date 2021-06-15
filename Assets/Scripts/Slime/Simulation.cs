@@ -48,7 +48,7 @@ public class Simulation : MonoBehaviour
 		{
 			Vector3 centre = new Vector3(settings.width / 2, settings.height / 2, settings.depth / 2);
 			Vector3 startPos = Vector3.zero;
-			Vector2 angles = new Vector2(0,Mathf.PI);//Phi(x-y), theta(z)
+			Vector2 angles = new Vector2(0,Mathf.PI / 2);//Phi(x-y), theta(z)
 			Vector2 randomAngles = new Vector2(Random.value * Mathf.PI * 2, Random.value * Mathf.PI);			
 
 			if (settings.spawnMode == SpawnMode.Point)
@@ -58,7 +58,7 @@ public class Simulation : MonoBehaviour
 			}
 			else if (settings.spawnMode == SpawnMode.Random)
 			{
-				startPos = new Vector3(Random.Range(0, settings.width), Random.Range(0, settings.height), Random.Range(0, settings.depth));
+				startPos = new Vector2(Random.Range(0, settings.width), Random.Range(0, settings.height));
 				angles = randomAngles;
 			}
 			else if (settings.spawnMode == SpawnMode.InwardCircle)
