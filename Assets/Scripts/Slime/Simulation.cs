@@ -48,7 +48,7 @@ public class Simulation : MonoBehaviour
 		{
 			Vector3 centre = new Vector3(settings.width / 2, settings.height / 2, settings.depth / 2);
 			Vector3 startPos = Vector3.zero;
-			Vector2 angles = new Vector2(0,Mathf.PI / 2);//Phi(x-y), theta(z)
+			Vector2 angles = new Vector2(0,Mathf.PI);//Phi(x-y), theta(z)
 			Vector2 randomAngles = new Vector2(Random.value * Mathf.PI * 2, Random.value * Mathf.PI);			
 
 			if (settings.spawnMode == SpawnMode.Point)
@@ -64,7 +64,7 @@ public class Simulation : MonoBehaviour
 			else if (settings.spawnMode == SpawnMode.InwardCircle)
 			{
 				startPos = centre + Random.insideUnitSphere * settings.height * 0.5f;
-				Vector3 loc = (centre - startPos);
+				Vector3 loc = (centre - startPos).normalized;
 
 				float phi = Mathf.Atan2(loc.normalized.y, loc.normalized.x);
 				float theta = Mathf.Atan2(Mathf.Sqrt(Mathf.Pow(loc.x,2) + Mathf.Pow(loc.y,2)), loc.z);
@@ -102,6 +102,7 @@ public class Simulation : MonoBehaviour
 
 		compute.SetInt("width", settings.width);
 		compute.SetInt("height", settings.height);
+		compute.SetInt("depth", settings.depth);
 	}
 
 	void FixedUpdate()
@@ -119,7 +120,7 @@ public class Simulation : MonoBehaviour
 			ComputeHelper.ClearRenderTexture(displayTexture);
 
 			drawAgentsCS.SetTexture(0, "TargetTexture", displayTexture);
-			ComputeHelper.Dispatch(drawAgentsCS, settings.numAgents, 1, 1, 0);
+			ComputeHelper.Dispatch(drawAgentsCS, settings.numAgents, 1, 1, 1);
 		}
 		else
 		{

@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: C
   m_EditorClassIdentifier: 
   stepsPerFrame: 1
-  width: 128
-  height: 128
+  width: 64
+  height: 64
   depth: 64
-  numAgents: 250000
-  spawnMode: 3
+  numAgents: 500000
+  spawnMode: 0
   trailWeight: 5
   decayRate: 0.2
   diffuseRate: 3
