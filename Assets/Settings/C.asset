@@ -27,3 +27,8 @@ MonoBehaviour:
     sensorAngleSpacing: 30
     sensorOffsetDst: 35
     sensorSize: 1
+  - moveSpeed: 20
+    turnSpeed: 2
+    sensorAngleSpacing: 30
+    sensorOffsetDst: 100
+    sensorSize: 1

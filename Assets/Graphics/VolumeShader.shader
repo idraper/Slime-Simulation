@@ -5,9 +5,6 @@ Shader "Unlit/VolumeShader"
         _MainTex ("Texture", 3D) = "white" {}
         _Alpha ("Alpha", float) = 0.02
         _StepSize ("Step Size", float) = .01
-        _ResWidth ("Resolution Width", float) = 0
-        _ResHeight ("Resolution Height", float) = 0
-        _ResDepth ("Resolution Depth", float) = 0
     }
     SubShader
     {
@@ -45,9 +42,6 @@ Shader "Unlit/VolumeShader"
             float4 _MainTex_ST;
             float _Alpha;
             float _StepSize;
-            float _ResWidth;
-            float _ResHeight;
-            float _ResDepth;
 
             v2f vert (appdata v)
             {
@@ -55,7 +49,6 @@ Shader "Unlit/VolumeShader"
 
                 // Vertex in object space this will be the starting point of raymarching
                 o.objectVertex = v.vertex;
-                // o.objectVertex = float3(v.vertex.x*_ResWidth, v.vertex.y*_ResHeight, v.vertex.z*_ResDepth);
 
                 // Calculate vector from camera to vertex in world space
                 float3 worldVertex = mul(unity_ObjectToWorld, v.vertex).xyz;
@@ -84,30 +77,14 @@ Shader "Unlit/VolumeShader"
                 float3 samplePosition = rayOrigin;
 
                 // Raymarch through object space
-                // [unroll(MAX_STEP_COUNT)]
                 for (int i = 0; i < MAX_STEP_COUNT; i++)
                 {
                     // Accumulate color only within unit cube bounds
                     if(max(abs(samplePosition.x), max(abs(samplePosition.y), abs(samplePosition.z))) < 0.5f + EPSILON)
                     {
                         float4 sampledColor = tex3D(_MainTex, samplePosition + float3(0.5f, 0.5f, 0.5f));
-                        // sampledColor = tex3D(_MainTex, samplePosition);
-                        // float3 tmp = float3(samplePosition.x*_ResWidth, samplePosition.y*_ResHeight, samplePosition.z*_ResDepth);
-                        // sampledColor = tex3D(_MainTex, tmp + float3(0.5f, 0.5f, 0.5f));
-                        // sampledColor = tex3D(_MainTex, samplePosition + float3(5.0f, 5.0f, 5.0f));
-
                         sampledColor.a *= _Alpha;
                         color = BlendUnder(color, sampledColor);
-                        // color = sampledColor;
-
-                        // if (sampledColor.x > 0 || sampledColor.y > 0 || sampledColor.z > 0 || sampledColor.a > 0) {
-                        //     // sampledColor.a *= _Alpha;
-                        //     sampledColor.a *= _Alpha;
-                        //     color = float4(0,1,0,1);
-                        //     // color = BlendUnder(float4(0,1,0,1), sampledColor);
-                        //     break;
-                        // }
-
                         samplePosition += rayDirection * _StepSize;
                     }
                 }

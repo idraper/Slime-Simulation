@@ -138,19 +138,9 @@
 		/// Copy the contents of one render texture into another. Assumes textures are the same size.
 		public static void CopyRenderTexture(RenderTexture source, RenderTexture target)
 		{
-			// Graphics.CopyTexture(source, target); // !WARNING: ONLY COPIES 0th index
 			if (copyTextureCompute == null)
 			{
 				copyTextureCompute = (ComputeShader)Resources.Load("CopyTexture");
-			}
-			if (source.width != target.width) {
-				Debug.Log("ERROR1");
-			}
-			if (source.height != target.height) {
-				Debug.Log("ERROR1");
-			}
-			if (source.volumeDepth != target.volumeDepth) {
-				Debug.Log("ERROR1");
 			}
 			copyTextureCompute.SetInt("width", source.width);
 			copyTextureCompute.SetInt("height", source.height);
@@ -211,14 +201,8 @@
 			ComputeBuffer minMaxBuffer = CreateAndSetBuffer<int>(new int[] { int.MaxValue, 0 }, normalizeTextureCompute, "minMaxBuffer", 0);
 			normalizeTextureCompute.SetBuffer(1, "minMaxBuffer", minMaxBuffer);
 			
-			//Todo: double check that source.depth ought to be the 4th parameter - what is the 5th parameter?
-			//The 4th paramter was originally 1 for both method calls
 			Dispatch(normalizeTextureCompute, source.width, source.height, source.volumeDepth, 0);
 			Dispatch(normalizeTextureCompute, source.width, source.height, source.volumeDepth, 1);
-
-			//int[] data = new int[2];
-			//minMaxBuffer.GetData(data);
-			//Debug.Log(data[0] + "   " + data[1]);
 
 			Release(minMaxBuffer);
 		}
