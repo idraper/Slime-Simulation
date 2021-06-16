@@ -15,6 +15,7 @@
 
 		static ComputeShader normalizeTextureCompute;
 		static ComputeShader clearTextureCompute;
+		static ComputeShader copyTextureCompute;
 		static ComputeShader swizzleTextureCompute;
 		static ComputeShader slicer;
 
@@ -137,7 +138,26 @@
 		/// Copy the contents of one render texture into another. Assumes textures are the same size.
 		public static void CopyRenderTexture(RenderTexture source, RenderTexture target)
 		{
-			Graphics.CopyTexture(source, target);
+			// Graphics.CopyTexture(source, target); // !WARNING: ONLY COPIES 0th index
+			if (copyTextureCompute == null)
+			{
+				copyTextureCompute = (ComputeShader)Resources.Load("CopyTexture");
+			}
+			if (source.width != target.width) {
+				Debug.Log("ERROR1");
+			}
+			if (source.height != target.height) {
+				Debug.Log("ERROR1");
+			}
+			if (source.volumeDepth != target.volumeDepth) {
+				Debug.Log("ERROR1");
+			}
+			copyTextureCompute.SetInt("width", source.width);
+			copyTextureCompute.SetInt("height", source.height);
+			copyTextureCompute.SetInt("depth", source.volumeDepth);
+			copyTextureCompute.SetTexture(0, "Src", source);
+			copyTextureCompute.SetTexture(0, "Dest", target);
+			Dispatch(copyTextureCompute, source.width, source.height, source.volumeDepth, 0);
 		}
 
 		/// Swap channels of texture, or set to zero. For example, if inputs are: (green, red, zero, zero)

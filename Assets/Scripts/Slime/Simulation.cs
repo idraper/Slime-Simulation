@@ -197,7 +197,7 @@ public class Simulation : MonoBehaviour
 
 
 		ComputeHelper.Dispatch(compute, settings.numAgents, 1, 1, kernelIndex: updateKernel);
-		ComputeHelper.Dispatch(compute, settings.width, settings.height, 1, kernelIndex: diffuseMapKernel);
+		ComputeHelper.Dispatch(compute, settings.width, settings.height, settings.depth, kernelIndex: diffuseMapKernel);
 
 		ComputeHelper.CopyRenderTexture(diffusedTrailMap, trailMap);
 	}

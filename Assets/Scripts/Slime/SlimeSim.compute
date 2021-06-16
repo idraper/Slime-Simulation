@@ -123,7 +123,6 @@ float2 sense(Agent agent, SpeciesSettings settings, float sensorAngleOffset) {
 		}
 	}
 
-	// return float2(sumX, 0);
 	return float2(sumX, sumY);
 }
 
@@ -220,7 +219,8 @@ void Update (uint3 id : SV_DispatchThreadID)
 	else {
 		float4 oldTrail = TrailMap[int3(newPos.x,newPos.y,newPos.z)];
 		TrailMap[int3(newPos.x,newPos.y,newPos.z)] = min(1, oldTrail + float4(agent.speciesMask.xyz,1.0) * trailWeight * deltaTime);
-		// TrailMap[int3(newPos.x,newPos.y,newPos.z)] = 1;
+		// TrailMap[int3(newPos.x,newPos.y,newPos.z)] = min(1, oldTrail + 1 * trailWeight * deltaTime);
+		// TrailMap[int3(newPos.x,newPos.y,newPos.z)] = oldTrail + float4(agent.speciesMask.xyz,1.0) * trailWeight * deltaTime;
 	}
 	
 	agents[id.x].position = newPos;

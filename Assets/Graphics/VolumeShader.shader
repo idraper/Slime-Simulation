@@ -4,7 +4,7 @@ Shader "Unlit/VolumeShader"
     {
         _MainTex ("Texture", 3D) = "white" {}
         _Alpha ("Alpha", float) = 0.02
-        _StepSize ("Step Size", float) = 1
+        _StepSize ("Step Size", float) = .01
         _ResWidth ("Resolution Width", float) = 0
         _ResHeight ("Resolution Height", float) = 0
         _ResDepth ("Resolution Depth", float) = 0

@@ -1,0 +1,16 @@
+#pragma kernel CopyTexture
+
+RWTexture3D<float4> Src;
+RWTexture3D<float4> Dest;
+uint width;
+uint height;
+uint depth;
+
+[numthreads(8,8,1)]
+void CopyTexture (uint3 id : SV_DispatchThreadID)
+{
+	if (id.x < 0 || id.x >= width || id.y < 0 || id.y >= height || id.z < 0 || id.z >= depth) {
+		return;
+	}
+	Dest[int3(id.x,id.y,id.z)] = Src[int3(id.x,id.y,id.z)];
+}
