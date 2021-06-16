@@ -12,5 +12,7 @@ void ClearTexture (uint3 id : SV_DispatchThreadID)
 		return;
 	}
 
+        float inverseResolution = 1.0 / (width - 1.0);
 	Source[int3(id.x,id.y,id.z)] = 0;
+	// Source[int3(id.x,id.y,id.z)] = float4(id.x * inverseResolution, id.y * inverseResolution, id.z * inverseResolution, 1.0);
 }

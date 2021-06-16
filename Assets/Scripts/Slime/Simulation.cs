@@ -33,6 +33,47 @@ public class Simulation : MonoBehaviour
 		Init();
 	}
 
+	static Texture3D CreateTexture3D()
+    {
+        // Configure the texture
+        int size = 16;
+        TextureFormat format = TextureFormat.RGBA32;
+        TextureWrapMode wrapMode =  TextureWrapMode.Clamp;
+
+        // Create the texture and apply the configuration
+        Texture3D texture = new Texture3D(size, size, size, format, false);
+        texture.wrapMode = wrapMode;
+
+        // Create a 3-dimensional array to store color data
+        Color[] colors = new Color[size * size * size];
+
+        // Populate the array so that the x, y, and z values of the texture will map to red, blue, and green colors
+        float inverseResolution = 1.0f / (size - 1.0f);
+        for (int z = 0; z < size; z++)
+        {
+            int zOffset = z * size * size;
+            for (int y = 0; y < size; y++)
+            {
+                int yOffset = y * size;
+                for (int x = 0; x < size; x++)
+                {
+                    colors[x + yOffset + zOffset] = new Color(x * inverseResolution,
+                        y * inverseResolution, z * inverseResolution, 1.0f);
+                }
+            }
+        }
+
+        // Copy the color values to the texture
+        texture.SetPixels(colors);
+
+        // Apply the changes to the texture and upload the updated texture to the GPU
+        texture.Apply();        
+
+        // Save the texture to your Unity Project
+        // AssetDatabase.CreateAsset(texture, "Assets/Example3DTexture.asset");
+	return texture;
+    }
+
 
 	void Init()
 	{
@@ -41,12 +82,17 @@ public class Simulation : MonoBehaviour
 		ComputeHelper.CreateRenderTexture(ref diffusedTrailMap, settings.width, settings.height, settings.depth, filterMode, format);
 		ComputeHelper.CreateRenderTexture(ref displayTexture, settings.width, settings.height, settings.depth, filterMode, format);
 		transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex", displayTexture);
+		// transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex", CreateTexture3D());
+		transform.GetComponentInChildren<MeshRenderer>().material.SetFloat("_ResWidth", settings.width);
+		transform.GetComponentInChildren<MeshRenderer>().material.SetFloat("_ResHeight", settings.height);
+		transform.GetComponentInChildren<MeshRenderer>().material.SetFloat("_ResDepth", settings.depth);
 
 		// Create agents with initial positions and angles
 		Agent[] agents = new Agent[settings.numAgents];
 		for (int i = 0; i < agents.Length; i++)
 		{
 			Vector3 centre = new Vector3(settings.width / 2, settings.height / 2, settings.depth / 2);
+			// centre = new Vector3(settings.width / 2, settings.height / 2, 0);
 			Vector3 startPos = Vector3.zero;
 			Vector2 angles = new Vector2(0,Mathf.PI / 2);//Phi(x-y), theta(z)
 			Vector2 randomAngles = new Vector2(Random.value * Mathf.PI * 2, Random.value * Mathf.PI);			
